@@ -197,7 +197,7 @@ Although the tests are not included in the package, you can run them locally by 
 
 <h2 id="license">📜 License</h2>
 
-This project is licensed under the GNU General Public License - see the [LICENSE file](LICENSE.txt) for details.
+This project is licensed under the GNU General Public License - see the [LICENSE file](LICENSE) for details.
 <h2 id="contact">📩 Contact</h2>
 
 If you have any questions, suggestions or would like to report a bug, feel free to contact me at [alicia.lorandi00@yahoo.com](alicia.lorandi00@yahoo.com).
