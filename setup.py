@@ -12,14 +12,16 @@ setup(
     license="GPLv3",
     packages=find_packages(),
     install_requires=[
-        "pytest",
         "python-dotenv",
         "pytz",
         "requests",
         "selenium",
         "selenium-stealth",
-        "webdriver-manager",
+        "webdriver-manager"
     ],
+    extras_require={
+        "test": ["pytest"]
+    },
     classifiers=[
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",

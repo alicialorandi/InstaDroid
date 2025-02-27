@@ -182,11 +182,15 @@ Although the tests are not included in the package, you can run them locally by 
         BLOCKED_INSTAGRAM_PASSWORD=your_blocked_password
         ```
 
-3. Install the requirements for testing:
+3. Install the necessary dependencies :
     ```bash
     pip install -r requirements.txt
     ```
-4. Run the tests:
+4. Install the test dependencies, including `pytest` for running tests, using the `test` extra :
+    ```bash
+    pip install -e .[test]
+    ```
+5. Run the tests:
     ```bash
     pytest
     ```
