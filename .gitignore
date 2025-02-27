@@ -1,0 +1,14 @@
+# pytest cache
+.pytest_cache/
+
+# VS Code config
+.vscode/
+
+# python compiled bytecode
+__pycache__/
+*.pyc
+*.pyo
+
+# environment file
+.env
+test/.env
