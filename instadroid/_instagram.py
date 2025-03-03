@@ -7,11 +7,14 @@ from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
-from webdriver_manager.chrome import ChromeDriverManager
+from tempfile import mkdtemp
+from typing import Tuple, Union
 from selenium_stealth import stealth
+from webdriver_manager.chrome import ChromeDriverManager
 
 import re
 import requests
+import types
 
 
 class Instagram(ABC):
@@ -19,12 +22,12 @@ class Instagram(ABC):
     Uninstanciable class  that will be inherited by the other Instagram classes.
     """
 
-    def __check_internet_connection(self):
+    def __check_internet_connection(self) -> bool:
         """
         Checks whether user is connected to the internet or not.
         
         Returns
-        ----------
+        -------
             bool : True if they are connected, False if they are not
         """
         try:
@@ -36,12 +39,13 @@ class Instagram(ABC):
         except requests.ConnectionError:
             return False 
 
-    def __open_webdriver(self, headless):
+    def __open_webdriver(self, 
+                         headless: bool) -> None:
         """
         Creates a new webdriver instance and changes properties to help prevent bot detection.
 
-        Parameters
-        ---------- 
+        Args
+        ---- 
             headless : bool
                 whether the webdriver is headless or not        
         """
@@ -51,6 +55,8 @@ class Instagram(ABC):
         options = webdriver.ChromeOptions()
         if headless:
             options.add_argument('--headless=new')
+        temp_user_data_dir = mkdtemp()
+        options.add_argument(f"--user-data-dir={temp_user_data_dir}")
         options.add_argument("--disable-blink-features=AutomationControlled")
         options.add_argument("--disable-popup-blocking")
         options.add_argument("--start-maximized")
@@ -70,7 +76,7 @@ class Instagram(ABC):
                 renderer="Intel Iris OpenGL Engine",
                 fix_hairline=True)
         
-    def __accept_cookies(self):
+    def __accept_cookies(self) -> None:
         """
         Gets rid of cookies pop up window when logging in.
         """
@@ -81,12 +87,14 @@ class Instagram(ABC):
         # click button
         cookie_button.click()
 
-    def __log_in(self, username, password):
+    def __log_in(self, 
+                 username: str, 
+                 password: str) -> None:
         """
-        Logs into instagram with credentials passed into class attributes in subclasses.
+        Logs into Instagram with credentials passed into class attributes in subclasses.
         
-        Parameters
-        ---------- 
+        Args
+        ---- 
             username : str
                 username of user
             password : str
@@ -111,7 +119,7 @@ class Instagram(ABC):
         self.driver.execute_script("arguments[0].click();", 
                                    submit_button)
 
-    def __close_time_limit_window(self):
+    def __close_time_limit_window(self) -> None:
         """
         Gets rid of "reached daily limit" pop up window.
         """
@@ -122,7 +130,7 @@ class Instagram(ABC):
         # click button
         close_button.click()
     
-    def __close_sleep_mode_window(self):
+    def __close_sleep_mode_window(self) -> None:
         """
         Gets rid of "sleep mode" pop up window.
         """
@@ -133,12 +141,12 @@ class Instagram(ABC):
         # click button
         close_button.click()
 
-    def _check_logged_in(self):
+    def _check_logged_in(self) -> None:
         """
         Checks if log in was successful.
 
         Raises
-        ----------
+        ------
             IncorrectCredentialsException
                 If the credentials are incorrect.
             BlockedAccountException
@@ -177,20 +185,22 @@ class Instagram(ABC):
                 # with possible back to back "sleep mode" and "daily time limit" windows
                 break
     
-    def _initiate_instagram(self, user_creds, headless):
+    def _initiate_instagram(self, 
+                            user_creds: Tuple[str, str], 
+                            headless: bool) -> None:
         """
         Opens new webdriver to Instagram and logs in.
 
-        Parameters
-        ---------- 
-            user_creds : tuple
+        Args
+        ---- 
+            user_creds : Tuple[str, str]
                 user's instagram credentials passed into class attributes in subclasses,
                 must be of length 2 and have the username and password as its first and second values
             headless : bool
                 whether the webdriver is headless or not
                 
         Raises
-        ----------
+        ------
             NoInternetConnectionException
                 If there is no internet connection.
             IncorrectCredentialsException
@@ -222,7 +232,7 @@ class Instagram(ABC):
         # check if user has logged in correctly
         self._check_logged_in()
 
-    def close(self):
+    def close(self) -> None:
         """
         Closes the instance's webdriver.
         """
@@ -235,19 +245,39 @@ class Instagram(ABC):
             # if driver closed, do nothing
             pass
 
-    def __enter__(self):
+    def __enter__(self) -> "Instagram":
         """
         Magic method that allows to use an instance of the object with the "with" statement, calls "__init__" method.
+
+        Returns
+        -------
+            Instagram : the instance of the class, enabling method chaining in a "with" block
         """
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, 
+                 exc_type: Union[type, None], 
+                 exc_val: Union[BaseException, None], 
+                 exc_tb: Union[types.TracebackType, None]) -> Union[bool, None]:
         """
         Magic method that allows to use an instance of the object with the "with" statement, calls "close" method.
+
+        Args
+        ---- 
+            exc_type : Union[type, None]
+                the type of the exception raised (if any)
+            exc_val : Union[BaseException, None]
+                the exception instance raised (if any)
+            exc_tb : Union[types.TracebackType, None]
+                the traceback object related to the exception (if any)
+
+        Returns
+        -------
+            Union[bool, None] : returns True to suppress the exception, False or None to propagate it
         """
         self.close()
 
-    def _get_self_page(self):
+    def _get_self_page(self) -> None:
         """
         Gets self.driver to current instance's page.
         """
@@ -265,12 +295,12 @@ class Instagram(ABC):
         if current_url != self.url:
             self.driver.get(self.url) 
 
-    def _get_user_username(self):
+    def _get_user_username(self) -> str:
         """
         Finds the user's username.
         
         Returns
-        ----------
+        -------
             str : the user's username
         """
         # find "go to profile page" button
