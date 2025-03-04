@@ -26,6 +26,8 @@ jobs:
 
             - name: Set up Google Chrome
               uses: browser-actions/setup-chrome@v1
+              with:
+                install-chromedriver: true
 
             - name: Set up environment variables from GitHub Secrets
               run: |
