@@ -1,6 +1,8 @@
-from datetime import datetime as dt
-from datetime import timedelta
 from selenium.webdriver.common.by import By
+from typing import List, Tuple, Union
+
+import datetime
+import selenium
 
 
 class ElementsHaveUpdated:
@@ -9,19 +11,21 @@ class ElementsHaveUpdated:
 
     Attributes
     ----------
-        locator : tuple
+        locator : Tuple[str, str]
             used to find the elements
         previous_elements : list
             previously found elements   
     """
 
-    def __init__(self, locator, previous_elements):
+    def __init__(self, 
+                 locator: Tuple[str, str], 
+                 previous_elements: list) -> None:
         """
         Initializes an instance of the class ElementsHaveUpdated, called within WebDriverWait.
 
-        Parameters
-        ----------
-            locator : tuple
+        Args
+        ----
+            locator : Tuple[str, str]
                 used to find the elements
             previous_elements : list
                 previously found elements
@@ -29,18 +33,21 @@ class ElementsHaveUpdated:
         self.locator = locator
         self.previous_elements = previous_elements
 
-    def __call__(self, driver):
+    def __call__(self, 
+                 driver: selenium.webdriver.Chrome) \
+                    -> Union[selenium.webdriver.remote.webelement.WebElement, bool]:
         """
-        Allows ElementsHaveUpdated to be called as a function.
+        Makes an instance of ElementsHaveUpdated callable.
 
-        Parameters
-        ----------
+        Args
+        ----
             driver : selenium.webdriver.Chrome
-                automated browser controlled by selenium
+                automated browser controlled by Selenium
 
         Returns
-        ----------
-            selenium.webdriver.remote.webelement.WebElement or bool : the WebElements if they have been updated, False if not
+        -------
+            Union[selenium.webdriver.remote.webelement.WebElement, bool] : \
+                the WebElements if they have been updated, False if not
         """
         # find elements
         elements = driver.find_elements(*self.locator)
@@ -59,7 +66,7 @@ class CommentHasBeenPosted:
 
     Attributes
     ----------
-        locator : tuple
+        locator : Tuple[str, str]
             used to find the elements
         username : str
             username of user who shared the comment    
@@ -69,13 +76,17 @@ class CommentHasBeenPosted:
             text of the comment
     """
 
-    def __init__(self, locator, username, datetime, text):
+    def __init__(self, 
+                 locator: Tuple[str, str], 
+                 username: str, 
+                 datetime: datetime.datetime, 
+                 text: str) -> None:
         """
         Initializes an instance of the class CommentHasBeenPosted, called within WebDriverWait.
 
-        Parameters
-        ----------
-            locator : tuple
+        Args
+        ----
+            locator : Tuple[str, str]
                 used to find the elements
             username : str
                 username of user who commented    
@@ -89,30 +100,33 @@ class CommentHasBeenPosted:
         self.datetime = datetime
         self.text = text
 
-    def __call__(self, driver):
+    def __call__(self, 
+                 driver: selenium.webdriver.Chrome) \
+                    -> Union[List[selenium.webdriver.remote.webelement.WebElement], bool]:
         """
-        Allows CommentHasBeenPosted to be called as a function.
+        Makes an instance of CommentHasBeenPosted callable.
 
-        Parameters
-        ----------
+        Args
+        ----
             driver : selenium.webdriver.Chrome
-                automated browser controlled by selenium
+                automated browser controlled by Selenium
 
         Returns
-        ----------
-            selenium.webdriver.remote.webelement.WebElement or bool : the WebElement if it was found, False if not
+        -------
+            Union[List[selenium.webdriver.remote.webelement.WebElement], bool] : \
+                the list of WebElements if they were found, False if not
         """
         # find all comments on page
         comments = driver.find_elements(*self.locator)
         for i_comment in comments:
             # find datetime from ith comment element
             datetime_selector = ".//time"
-            datetime = i_comment.find_element(By.XPATH, 
-                                              datetime_selector)
-            datetime = datetime.get_attribute("datetime")
+            datetime_elmt = i_comment.find_element(By.XPATH, 
+                                                   datetime_selector)
+            datetime_attrbt = datetime_elmt.get_attribute("datetime")
             # convert datetime to datetime.datetime then back to string
-            datetime = dt.strptime(datetime, "%Y-%m-%dT%H:%M:%S.%fZ")
-            datetime = datetime.strftime("%d/%m/%Y, %H:%M:%S")
+            datetime_attrbt = datetime.datetime.strptime(datetime_attrbt, "%Y-%m-%dT%H:%M:%S.%fZ")
+            datetime_attrbt = datetime_attrbt.strftime("%d/%m/%Y, %H:%M:%S")
             # find publisher from ith comment element
             publisher_selector = ".//time" + "/.."*3 + "//a[not(time)]"
             publisher = i_comment.find_element(By.XPATH, 
@@ -124,17 +138,17 @@ class CommentHasBeenPosted:
                                           text_selector)
             text = text.text
             # get posted comment's datetime - 1 sec
-            self_datetime_1sec_subsracted = dt.strptime(self.datetime, "%d/%m/%Y, %H:%M:%S")
-            self_datetime_1sec_subsracted = self_datetime_1sec_subsracted - timedelta(seconds=1)
+            self_datetime_1sec_subsracted = datetime.datetime.strptime(self.datetime, "%d/%m/%Y, %H:%M:%S")
+            self_datetime_1sec_subsracted = self_datetime_1sec_subsracted - datetime.timedelta(seconds=1)
             self_datetime_1sec_subsracted = self_datetime_1sec_subsracted.strftime("%d/%m/%Y, %H:%M:%S")
             # get posted comment's datetime + 1 sec
-            self_datetime_1sec_added = dt.strptime(self.datetime, "%d/%m/%Y, %H:%M:%S")
-            self_datetime_1sec_added = self_datetime_1sec_added + timedelta(seconds=1)
+            self_datetime_1sec_added = datetime.datetime.strptime(self.datetime, "%d/%m/%Y, %H:%M:%S")
+            self_datetime_1sec_added = self_datetime_1sec_added + datetime.timedelta(seconds=1)
             self_datetime_1sec_added = self_datetime_1sec_added.strftime("%d/%m/%Y, %H:%M:%S")
             # check if ith comment datetime in [posted comment's datetime - 1 sec, posted comment's datetime + 1 sec] 
             # time interval and that its text corresponds to the posted comment's text 
             # and that its username corresponds to the posted comment's username
-            if (datetime in [self_datetime_1sec_subsracted, self.datetime, self_datetime_1sec_added]) \
+            if (datetime_attrbt in [self_datetime_1sec_subsracted, self.datetime, self_datetime_1sec_added]) \
                 and (publisher == self.username) and (text == self.text):
                 # if all these conditions are met, we are assuming ith comment is the element representing the posted comment
                 return i_comment
@@ -146,18 +160,20 @@ class InputBarHasCleared:
     An expectation for checking that the input bar has cleared after a comment has been submitted.
     """
 
-    def __call__(self, driver):
+    def __call__(self, 
+                 driver: selenium.webdriver.Chrome) \
+                    -> Union[selenium.webdriver.remote.webelement.WebElement, bool]:
         """
-        Allows InputBarHasCleared to be called as a function.
+        Makes an instance of InputBarHasCleared callable.
 
-        Parameters
-        ----------
+        Args
+        ----
             driver : selenium.webdriver.Chrome
-                automated browser controlled by selenium
+                automated browser controlled by Selenium
 
         Returns
-        ----------
-            selenium.webdriver.remote.webelement.WebElement or bool : the input bar WebElement once it has cleared
+        -------
+            Union[selenium.webdriver.remote.webelement.WebElement, bool] : the input bar WebElement once it has cleared
         """
         # find comment input
         comment_input_selector = "textarea[class]"

@@ -8,11 +8,14 @@ from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.color import Color
 from selenium.webdriver.support.ui import WebDriverWait
+from typing import Dict, Generator, Tuple, Union
 
+import _pytest
 import json
 import os
 import pytest
 import re
+import selenium
 
 
 # load environment variables from .env file
@@ -42,18 +45,21 @@ class TestInstagramPostLogIn:
         (None, ("username", 1), "TypeError"), # user_creds has one element of incorrect type
         (None, (1, "password"), "TypeError"), # user_creds has one element of incorrect type
         (None, ("incorrect_username", "incorrect_password"), "IncorrectCredentialsException"), # incorrect credentials
-        # account no blocked anymore so wait for it or another one to get blocked
+        # account not blocked anymore so wait for it or another one to get blocked
         # (None, (blocked_username, blocked_password), "BlockedAccountException") # credentials belong to a blocked account
     ])
-    def test_log_in(self, driver, user_creds, expected_exception):
+    def test_log_in(self, 
+                    driver: Union[selenium.webdriver.Chrome, None], 
+                    user_creds: Union[Tuple[str, str], None], 
+                    expected_exception: str) -> None:
         """
         Parametrized test to test expected exceptions raised when logging in.
 
-        Parameters
-        ---------- 
-            driver : selenium.webdriver.Chrome or NoneType
-                Automated browser controlled by selenium
-            user_creds : tuple or NoneType
+        Args
+        ---- 
+            driver : Union[selenium.webdriver.Chrome, None]
+                Automated browser controlled by Selenium
+            user_creds : Union[Tuple[str, str], None] 
                 User's credentials
             expected_exception : str
                 Expected exception raised
@@ -89,9 +95,13 @@ class TestInstagramPostWebScraping:
     post_urls = expected_data.keys()
 
     @pytest.fixture(scope="class")
-    def instagram_post_without_initial_driver(self):
+    def instagram_post_without_initial_driver(self) -> Generator[InstagramPost, None, None]:
         """
         Initializes the test class by building an InstagramPost instance out of credentials.
+
+        Yields
+        ------
+            InstagramPost : an instance of the class for testing
         """
         post_url = "https://www.instagram.com/p/C9zsEnZOc2j/"
         post = InstagramPost(post_url=post_url, 
@@ -102,20 +112,22 @@ class TestInstagramPostWebScraping:
         post.close()
 
     @pytest.fixture(scope="class", params=post_urls)
-    def instagram_post(self, request, instagram_post_without_initial_driver):
+    def instagram_post(self, 
+                       request: _pytest.fixtures.FixtureRequest, 
+                       instagram_post_without_initial_driver: InstagramPost) -> InstagramPost:
         """
         Initializes the test class by building as many InstagramPost instances, out of a 
         Selenium chrome webdriver instance, as there are URLs in post_urls parameter.
 
-        Parameters
-        ---------- 
-            request : FixtureRequest
+        Args
+        ----
+            request : _pytest.fixtures.FixtureRequest
                 Object allowing to access fixture parameters
             instagram_post_without_initial_driver : InstagramPost
                 Base InstagramPost instance created out of credentials
 
         Returns
-        ---------- 
+        ------- 
             InstagramPost : an InstagramPost instance created out of the base InstagramPost instance's webdriver
         """
         # get post_url parameter
@@ -130,12 +142,13 @@ class TestInstagramPostWebScraping:
                              driver=driver)
         return post
     
-    def test_get_post_user(self, instagram_post):
+    def test_get_post_user(self, 
+                           instagram_post: InstagramPost) -> None:
         """
         Tests whether the username(s) that is scraped is correct.
 
-        Parameters
-        ---------- 
+        Args
+        ---- 
             instagram_post : InstagramPost
                 InstagramPost instance provided by the fixture
         """
@@ -161,12 +174,13 @@ class TestInstagramPostWebScraping:
             assert post_user == expected_post_user, \
                 f"Expected user '{expected_post_user}', but got '{post_user}'"
 
-    def test_get_post_datetime(self, instagram_post):
+    def test_get_post_datetime(self, 
+                               instagram_post: InstagramPost) -> None:
         """
         Tests whether the datetime that is scraped is correct.
 
-        Parameters
-        ---------- 
+        Args
+        ---- 
             instagram_post : InstagramPost
                 InstagramPost instance provided by the fixture
         """
@@ -180,12 +194,13 @@ class TestInstagramPostWebScraping:
         assert post_datetime == expected_post_datetime, \
             f"Expected datetime '{expected_post_datetime}', but got '{post_datetime}'"
 
-    def test_get_post_type(self, instagram_post):
+    def test_get_post_type(self, 
+                           instagram_post: InstagramPost) -> None:
         """
         Tests whether the type of post that is deduced is correct.
 
-        Parameters
-        ---------- 
+        Args
+        ---- 
             instagram_post : InstagramPost
                 InstagramPost instance provided by the fixture
         """
@@ -199,12 +214,13 @@ class TestInstagramPostWebScraping:
         assert post_type == expected_post_type, \
             f"Expected type '{expected_post_type}', but got '{post_type}'"
 
-    def test_get_post_caption(self, instagram_post):
+    def test_get_post_caption(self, 
+                              instagram_post: InstagramPost) -> None:
         """
         Tests whether the caption that is scraped is correct.
 
-        Parameters
-        ---------- 
+        Args
+        ---- 
             instagram_post : InstagramPost
                 InstagramPost instance provided by the fixture
         """
@@ -218,12 +234,13 @@ class TestInstagramPostWebScraping:
         assert post_caption == expected_post_caption, \
             f"Expected caption '{expected_post_caption}', but got '{post_caption}'"
 
-    def test_get_post_likes_count(self, instagram_post):
+    def test_get_post_likes_count(self, 
+                                  instagram_post: InstagramPost) -> None:
         """
         Tests whether the likes count that is scraped is correct.
 
-        Parameters
-        ---------- 
+        Args
+        ---- 
             instagram_post : InstagramPost
                 InstagramPost instance provided by the fixture
         """
@@ -237,12 +254,13 @@ class TestInstagramPostWebScraping:
         assert post_likes_count == expected_post_likes_count, \
             f"Expected likes count '{expected_post_likes_count}', but got '{post_likes_count}'"
 
-    def test_get_post_location(self, instagram_post):
+    def test_get_post_location(self, 
+                               instagram_post: InstagramPost) -> None:
         """
         Tests whether the location that is scraped is correct.
 
-        Parameters
-        ---------- 
+        Args
+        ---- 
             instagram_post : InstagramPost
                 InstagramPost instance provided by the fixture
         """
@@ -256,12 +274,13 @@ class TestInstagramPostWebScraping:
         assert post_location == expected_post_location, \
             f"Expected location '{expected_post_location}', but got '{post_location}'"
 
-    def test_get_post_audio(self, instagram_post):
+    def test_get_post_audio(self, 
+                            instagram_post: InstagramPost) -> None:
         """
         Tests whether the audio that is scraped is correct.
 
-        Parameters
-        ---------- 
+        Args
+        ---- 
             instagram_post : InstagramPost
                 InstagramPost instance provided by the fixture
         """
@@ -275,12 +294,13 @@ class TestInstagramPostWebScraping:
         assert post_audio == expected_post_audio, \
             f"Expected audio '{expected_post_audio}', but got '{post_audio}'"
 
-    def test_get_post_media_count(self, instagram_post):
+    def test_get_post_media_count(self, 
+                                  instagram_post: InstagramPost) -> None:
         """
         Tests whether the media count that is deduced is correct.
 
-        Parameters
-        ---------- 
+        Args
+        ---- 
             instagram_post : InstagramPost
                 InstagramPost instance provided by the fixture
         """
@@ -294,12 +314,13 @@ class TestInstagramPostWebScraping:
         assert post_media_count == expected_post_media_count, \
             f"Expected media count '{expected_post_media_count}', but got '{post_media_count}'"
 
-    def test_get_post_likes_list(self, instagram_post):
+    def test_get_post_likes_list(self, 
+                                 instagram_post: InstagramPost) -> None:
         """
         Tests whether the scraped likes list is correct.
 
-        Parameters
-        ---------- 
+        Args
+        ---- 
             instagram_post : InstagramPost
                 InstagramPost instance provided by the fixture
         """
@@ -319,12 +340,13 @@ class TestInstagramPostWebScraping:
             assert post_likes_list == expected_post_likes_list, \
                 f"Expected likes list '{expected_post_likes_list}', but got '{post_likes_list}'"
             
-    def test_get_post_comments(self, instagram_post):
+    def test_get_post_comments(self, 
+                               instagram_post: InstagramPost) -> None:
         """
         Tests whether the scraped comment data is correct.
 
-        Parameters
-        ---------- 
+        Args
+        ---- 
             instagram_post : InstagramPost
                 InstagramPost instance provided by the fixture
         """
@@ -364,9 +386,13 @@ class TestInstagramPostWebAutomation:
     """
 
     @pytest.fixture(scope="class")
-    def instagram_post(self):
+    def instagram_post(self) -> Generator[InstagramPost, None, None]:
         """
         Initializes the test class by building an InstagramPost instance out of credentials.
+
+        Yields
+        ------
+            InstagramPost : an instance of the class for testing
         """
         post_url = "https://www.instagram.com/p/DC7MHx9S_1R/"
         post = InstagramPost(post_url=post_url, 
@@ -376,12 +402,13 @@ class TestInstagramPostWebAutomation:
         # close post at the end of class tests
         post.close()
 
-    def __get_like_button_color(self, instagram_post):
+    def __get_like_button_color(self, 
+                                instagram_post: InstagramPost) -> None:
         """
         Finds a post's like button current color.
 
-        Parameters
-        ---------- 
+        Args
+        ---- 
             instagram_post : InstagramPost
                 InstagramPost instance provided by the fixture
         """
@@ -396,12 +423,13 @@ class TestInstagramPostWebAutomation:
         button_color = Color.from_string(button.value_of_css_property("fill"))
         return button_color
 
-    def test_like_post(self, instagram_post):
+    def test_like_post(self, 
+                       instagram_post: InstagramPost) -> None:
         """
         Tests whether the like_post() method actually likes the post.
 
-        Parameters
-        ---------- 
+        Args
+        ---- 
             instagram_post : InstagramPost
                 InstagramPost instance provided by the fixture
         """
@@ -414,12 +442,13 @@ class TestInstagramPostWebAutomation:
         assert button_color == expected_button_color, \
             f"Expected '{expected_button_color}', but got '{button_color}'"
 
-    def test_unlike_post(self, instagram_post):
+    def test_unlike_post(self, 
+                         instagram_post: InstagramPost) -> None:
         """
         Tests whether the unlike_post() method actually unlikes the post.
 
-        Parameters
-        ---------- 
+        Args
+        ---- 
             instagram_post : InstagramPost
                 InstagramPost instance provided by the fixture
         """
@@ -433,12 +462,15 @@ class TestInstagramPostWebAutomation:
         assert button_color in (expected_button_color1, expected_button_color2), \
             f"Expected '{expected_button_color1}' or '{expected_button_color2}', but got '{button_color}'"
 
-    def __find_comment(self, instagram_post, comment_url, levels):
+    def __find_comment(self, 
+                       instagram_post: InstagramPost,
+                       comment_url: str, 
+                       levels: int) -> selenium.webdriver.remote.webelement.WebElement:
         """
         Finds comment element that corresponds to a specific URL.
 
-        Parameters
-        ---------- 
+        Args
+        ---- 
             instagram_post : InstagramPost
                 InstagramPost instance provided by the fixture
             comment_url : str
@@ -447,7 +479,7 @@ class TestInstagramPostWebAutomation:
                 Number of levels to get parent element from comment element
 
         Returns
-        ----------
+        -------
             selenium.webdriver.remote.webelement.WebElement : the comment WebElement that has comment_url as its href
         """
         # find comment element corresponding to comment_url
@@ -459,18 +491,21 @@ class TestInstagramPostWebAutomation:
         ActionChains(instagram_post.driver).move_to_element(comment).perform()
         return comment
     
-    def __get_comment_like_button_color(self, comment):
+    def __get_comment_like_button_color(self, 
+                                        comment: selenium.webdriver.remote.webelement.WebElement) \
+                                            -> selenium.webdriver.support.color.Color:
         """
         Finds the like (or unlike) button color of the comment.
 
-        Parameters
-        ----------
+        Args
+        ----
             comment : selenium.webdriver.remote.webelement.WebElement
                 the WebElement representing the comment
 
         Returns
-        ----------
-            selenium.webdriver.support.color.Color : the color of the WebElement representing the like (or unlike) button of the comment.
+        -------
+            selenium.webdriver.support.color.Color : the color of the WebElement \
+                representing the like (or unlike) button of the comment.
         """
         # selector for when comment has not been liked
         like_button_selector = ".//*[@aria-label='Like']"
@@ -484,12 +519,13 @@ class TestInstagramPostWebAutomation:
         button_color = Color.from_string(button.value_of_css_property("fill"))
         return button_color
     
-    def test_like_comment(self, instagram_post):
+    def test_like_comment(self, 
+                          instagram_post: InstagramPost) -> None:
         """
         Tests whether the like_comment() method actually likes a comment.
 
-        Parameters
-        ---------- 
+        Args
+        ---- 
             instagram_post : InstagramPost
                 InstagramPost instance provided by the fixture
         """
@@ -506,12 +542,13 @@ class TestInstagramPostWebAutomation:
         assert button_color == expected_button_color, \
             f"Expected '{expected_button_color}', but got '{button_color}'"
 
-    def test_unlike_comment(self, instagram_post):
+    def test_unlike_comment(self, 
+                            instagram_post: InstagramPost) -> None:
         """
         Tests whether the unlike_comment() method actually removes a like from a comment.
 
-        Parameters
-        ---------- 
+        Args
+        ---- 
             instagram_post : InstagramPost
                 InstagramPost instance provided by the fixture
         """
@@ -529,18 +566,20 @@ class TestInstagramPostWebAutomation:
         assert button_color in (expected_button_color1, expected_button_color2), \
             f"Expected '{expected_button_color1}' or '{expected_button_color2}', but got '{button_color}'"
 
-    def __get_comment_data(self, comment):
+    def __get_comment_data(self, 
+                           comment: selenium.webdriver.remote.webelement.WebElement) -> Tuple[str, Dict[str, str]]:
         """
         Scrapes data of a comment (publisher, datetime, text, likes count and URL).
 
-        Parameters
-        ---------- 
-            instagram_post : InstagramPost
-                InstagramPost instance provided by the fixture
+        Args
+        ---- 
+            comment : selenium.webdriver.remote.webelement.WebElement
+                WebElement representing the comment
 
         Returns
-        ----------
-            tuple : the comment's URL and a dict containing its data
+        -------
+            Tuple[str, Dict[str, str]] : the comment's URL and a dict containing its data 
+                (four string key-value pairs: datetime, url, publisher and text)
         """
         # find datetime from comment element
         datetime_selector = ".//time"
@@ -585,12 +624,13 @@ class TestInstagramPostWebAutomation:
         }   
         return url, comment_data
     
-    def test_add_delete_comment(self, instagram_post):
+    def test_add_delete_comment(self, 
+                                instagram_post: InstagramPost) -> None:
         """
         Tests whether the add_comment() and delete_comment() methods respectively add and remove a comment.
 
-        Parameters
-        ---------- 
+        Args
+        ---- 
             instagram_post : InstagramPost
                 InstagramPost instance provided by the fixture
         """
@@ -629,20 +669,22 @@ class TestInstagramPostWebAutomation:
         except NoSuchElementException:
             assert True
 
-    def __get_last_reply(self, instagram_post, comment_url):
+    def __get_last_reply(self, 
+                         instagram_post: InstagramPost, 
+                         comment_url: str) -> Tuple[str, str]:
         """
         Finds the last reply of a comment.
 
-        Parameters
-        ---------- 
+        Args
+        ---- 
             instagram_post : InstagramPost
                 InstagramPost instance provided by the fixture
             comment_url : str
                 URL of a comment
 
         Returns
-        ----------
-            tuple : the last reply's username and text
+        -------
+            Tuple[str, str] : the last reply's username and text
         """
         # get comment element corresponding to comment_url (get 8th parent element)
         comment = self.__find_comment(instagram_post, comment_url, 8)
@@ -691,12 +733,13 @@ class TestInstagramPostWebAutomation:
         last_reply_text = text.text
         return last_reply_username, last_reply_text
 
-    def test_add_delete_reply(self, instagram_post):
+    def test_add_delete_reply(self, 
+                              instagram_post: InstagramPost) -> None:
         """
         Tests whether the add_reply() and delete_reply() methods respectively add and remove a reply to a comment.
 
-        Parameters
-        ---------- 
+        Args
+        ---- 
             instagram_post : InstagramPost
                 InstagramPost instance provided by the fixture
         """

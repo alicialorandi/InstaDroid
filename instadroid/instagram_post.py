@@ -1,5 +1,6 @@
 from ._custom_webdriver_waits import CommentHasBeenPosted, ElementsHaveUpdated, InputBarHasCleared
-from ._exceptions import ClosedWebdriverException, CommentNotSharedByUserException, IncorrectLinkException, LimitedCommentsException, ReplyNotFoundException, TryCountExceeded
+from ._exceptions import ClosedWebdriverException, CommentNotSharedByUserException, \
+    IncorrectLinkException, LimitedCommentsException, ReplyNotFoundException, TryCountExceeded
 from ._instagram import Instagram
 
 from datetime import datetime as dt
@@ -10,12 +11,13 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.color import Color
 from selenium.webdriver.support.ui import WebDriverWait
-from selenium import webdriver
+from typing import Dict, Tuple, Union
 from urllib3.exceptions import MaxRetryError
 
 import json
 import pytz
 import re
+import selenium
 import time
 
 
@@ -27,17 +29,17 @@ class InstagramPost(Instagram):
     If used without, make sure to use .close() function to close the automated browser controlled by selenium.
 
     Args
-    ----------
+    ----
         post_url : str
             URL of the post
-        driver : selenium.webdriver.Chrome or NoneType
+        driver : Union[selenium.webdriver.Chrome, None] (default value is None)
             automated browser controlled by selenium
             (if None, user_creds has to be passed in)
-        user_creds : tuple or NoneType
+        user_creds : Union[Tuple[str, str], None] (default value is None)
             user's credentials
             (if not None, must be of length 2 and have the username and password as its first and second values)
             (if None, driver has to be passed in)
-        headless_browser : bool
+        headless_browser : bool (default value is True)
             whether the webdriver is headless or not
     
     Attributes
@@ -46,11 +48,11 @@ class InstagramPost(Instagram):
             automated browser controlled by selenium
         url : str
             URL of the post
-        user : str or list
+        user : Union[str, list]
             user(s) who shared the post
         datetime : str
             datetime at which the post was shared
-        likes_count : int or NoneType
+        likes_count : Union[int, None]
             number of likes the post has received
         caption : str
             caption of the post
@@ -58,11 +60,11 @@ class InstagramPost(Instagram):
             type of post (caroussel, reel or single image)
         media_count : int
             number of pictures or videos the post contains
-        media_src : str or list
+        media_src : Union[str, list]
             link to each picture and video's source page 
-        location : str or NoneType
+        location : Union[str, None]
             geographical location of the post
-        audio : str or NoneType
+        audio : Union[str, None]
             the song that was added to the post
 
     Methods
@@ -93,27 +95,31 @@ class InstagramPost(Instagram):
             Closes the instance's webdriver.
     """
     
-    def __init__(self, post_url, driver=None, user_creds=None, headless_browser=True):
+    def __init__(self, 
+                 post_url: str, 
+                 driver: Union[selenium.webdriver.Chrome, None] = None, 
+                 user_creds: Union[Tuple[str, str], None] = None, 
+                 headless_browser : bool = True) -> None:
         """
         Creates an instance of the class InstagramPost and sets its attributes.
 
         Args
-        ----------
+        ----
             post_url : str
                 URL of the post
-            driver : selenium.webdriver.Chrome or NoneType
+            driver : Union[selenium.webdriver.Chrome, None] (default value is None)
                 automated browser controlled by selenium
                 (if None, user_creds has to be passed in)
-            user_creds : tuple or NoneType
+            user_creds : Union[Tuple[str, str], None] (default value is None)
                 user's credentials
                 (if not None, must be of length 2 and have the username and password as its first and second values)
                 (if None, driver has to be passed in)
-            headless_browser : bool
+            headless_browser : bool (default value is True)
                 whether the webdriver is headless or not 
                 (applicable only when new webdriver is instaciated : cannot change properties of already created webdriver)
 
         Raises
-        ----------
+        ------
             TypeError
                 If any of the arguments is not the correct type.
             NoInternetConnectionException
@@ -127,7 +133,7 @@ class InstagramPost(Instagram):
         if (not isinstance(post_url, str)) or (post_url.replace(" ", "") == ""):
             raise TypeError("'post_url' argument must be a non-empty string.")
         # check that driver argument is either a selenium.webdriver.Chrome or is equal to None
-        if (not isinstance(driver, webdriver.Chrome)) and (driver is not None):
+        if (not isinstance(driver, selenium.webdriver.Chrome)) and (driver is not None):
             raise TypeError("'driver' argument must be a selenium.webdriver or equal to None.")
         # check that user_creds argument is either a tuple or is equal to None
         if (not isinstance(user_creds, tuple)) and (user_creds is not None):
@@ -181,23 +187,23 @@ class InstagramPost(Instagram):
         # get post caption
         self.caption = self.__get_caption()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """
         Creates the representation of the object.
 
         Returns
-        ----------
+        -------
             str : the representation of the object 
         """
         representation = f"InstagramPost(post_url:\'{self.url}\', driver:{self.driver}, user_creds:{self.__user_creds})"
         return representation
 
-    def __str__(self):
+    def __str__(self) -> str:
         """
         Indicates the way an instance should be printed.
 
         Returns
-        ----------
+        -------
             str : the string printed when the print function is called on the instance
         """
         # store instance's attributes in dictionary
@@ -218,12 +224,12 @@ class InstagramPost(Instagram):
                                   indent=4)
         return data_to_json
     
-    def __check_link(self):
+    def __check_link(self) -> None:
         """
         Checks whether link exists and leads to a post.
 
         Raises
-        ----------
+        ------
             IncorrectLinkException
                 If page does not exist or not a post URL.
         """
@@ -242,12 +248,12 @@ class InstagramPost(Instagram):
         elif "https://www.instagram.com/p/" not in self.url:            
             raise IncorrectLinkException(f"The link {self.url} does not lead to a post.")
 
-    def __get_header(self):
+    def __get_header(self) -> selenium.webdriver.remote.webelement.WebElement:
         """
         Finds the header part of the post.
 
         Returns
-        ----------
+        -------
             selenium.webdriver.remote.webelement.WebElement : the WebElement representing the top part
         """
         # find "more options" button
@@ -260,13 +266,13 @@ class InstagramPost(Instagram):
                                                   header_selector)
         return header
 
-    def __get_user(self):
+    def __get_user(self) -> Union[str, list]:
         """
         Finds the user(s) who shared the post.
 
         Returns
-        ----------
-            str or list : the user(s) who shared the post (str if only one, list if more than one)
+        -------
+            Union[str, list] : the user(s) who shared the post (str if only one, list if more than one)
         """
         # get header part of the post
         header = self.__get_header()
@@ -304,13 +310,13 @@ class InstagramPost(Instagram):
             users = users[0]
         return users
 
-    def __get_location(self):
+    def __get_location(self) -> Union[str, None]:
         """
         Finds the geographical location of the post.
 
         Returns
-        ----------
-            str or NoneType : the geographical location of the post (str if there is one, None if not)
+        -------
+            Union[str, None] : the geographical location of the post (str if there is one, None if not)
         """
         # get header part of the post
         header = self.__get_header()
@@ -324,14 +330,14 @@ class InstagramPost(Instagram):
             # return None if it does not exist
             return None
 
-    def __get_audio(self):
+    def __get_audio(self) -> Union[str, None]:
         """
         Finds the audio that was added to the post 
         (works only on reels as the audio is not displayed on the Instagram desktop version).
 
         Returns
-        ----------
-            str or NoneType : the song name of the audio that was added to the post (str if there is one, None if not)
+        -------
+            Union[str, None] : the song name of the audio that was added to the post (str if there is one, None if not)
         """
         # get header part of the post
         header = self.__get_header()
@@ -345,13 +351,13 @@ class InstagramPost(Instagram):
             # return None if it does not exist
             return None
         
-    def __get_likes_count(self):
+    def __get_likes_count(self) -> Union[int, None]:
         """
         Finds the number of likes the post has received.
 
         Returns
-        ----------
-            int or NoneType : how many time the post received a like (int if it has likes, None if not)
+        -------
+            Union[int, None] : how many time the post received a like (int if it has likes, None if not)
         """
         # selector for when post has likes and is carousel or single image post
         likes_selector = "//a[contains(@href, '/liked_by/')][span[text()]]"
@@ -391,12 +397,12 @@ class InstagramPost(Instagram):
                 likes_count = int("".join(likes_count))
                 return likes_count
         
-    def __get_datetime(self):
+    def __get_datetime(self) -> str:
         """
         Finds the datetime at which the post was shared.
 
         Returns
-        ----------
+        -------
             str : what day and time the post was published
         """
         # find like or unlike button to get footer part of post
@@ -420,13 +426,14 @@ class InstagramPost(Instagram):
         datetime = datetime.strftime("%d/%m/%Y, %H:%M:%S")
         return datetime
     
-    def __get_media_src(self):
+    def __get_media_src(self) -> Union[str, list]:
         """
         Finds the link to each picture and video's source page, contained in the post.
 
         Returns
-        ----------
-            str or list : the link to each video or video (list if the post is a carousel, str if it has only one pic or video)
+        -------
+            Union[str, list] : the link to each video or video 
+                (list if the post is a carousel, str if it has only one pic or video)
         """
         # find post window
         header = self.__get_header()
@@ -471,12 +478,12 @@ class InstagramPost(Instagram):
             media_src = media_src[0]
         return media_src
     
-    def __get_media_count(self):
+    def __get_media_count(self) -> int:
         """
         Finds how many pictures or videos the post contains.
 
         Returns
-        ----------
+        -------
             int : how many pictures or videos the post has
         """
         if type(self.media_src) == str:
@@ -485,12 +492,12 @@ class InstagramPost(Instagram):
         else:
             return len(self.media_src)
     
-    def __get_type(self):
+    def __get_type(self) -> str:
         """
         Finds the type of post (caroussel, reel or single image).
 
         Returns
-        ----------
+        -------
             str : the type of post
         """
         if type(self.media_src) == str:
@@ -504,13 +511,13 @@ class InstagramPost(Instagram):
             # if multiple pictures and/or videos, post is caroussel
             return "caroussel"
         
-    def __get_caption(self):
+    def __get_caption(self) -> Union[str, None]:
         """
         Finds the post caption.
 
         Returns
-        ----------
-            str : the text that accompanies the post
+        -------
+            Union[str, None] : the text that accompanies the post (or None if there is none)
         """
         # find caption element
         caption_selector = "//div/span[time]" + "/.."*2 + "/span"
@@ -522,16 +529,16 @@ class InstagramPost(Instagram):
             # if no caption element, then post has no caption
             return None
     
-    def get_likes(self):
+    def get_likes(self) -> Union[list, None]:
         """
         Scrapes the post's likes list to get usernames of people who liked the post. 
         
         Returns
-        ----------
-            list or NoneType : the list of usernames (is None if unable to view the likes list)
+        -------
+            Union[list, None] : the list of usernames (is None if unable to view the likes list)
 
         Raises
-        ----------
+        ------
             TryCountExceeded
                 If method failed 3 times.
         """
@@ -619,18 +626,20 @@ class InstagramPost(Instagram):
                                         close_button)
         raise TryCountExceeded
     
-    def __get_comment_data(self, comment):
+    def __get_comment_data(self, 
+                           comment: str) -> Tuple[str, Dict[str, str]]:
         """
         Scrapes data of a comment (publisher, datetime, text, likes count and URL).
 
         Args
-        ----------
+        ----
             comment : selenium.webdriver.remote.webelement.WebElement
-                Selenium WebElement representing the comment
+                WebElement representing the comment
         
         Returns
-        ----------
-            tuple : the comment's URL and a dict containing its data
+        -------
+            Tuple[str, Dict[str, str]] : the comment's URL and a dict containing its data 
+                (four string key-value pairs: datetime, url, publisher and text)
         """
         # find datetime from comment element
         datetime_selector = ".//time"
@@ -675,24 +684,38 @@ class InstagramPost(Instagram):
         }   
         return url, comment_data
     
-    def get_comments(self, max=None):
+    def get_comments(self, 
+                     max: Union[int, None] = None) -> Dict[str, Dict]:
         """
         Scrapes comments published under the post.
 
         Args
-        ----------
-            max : int or NoneType
+        ----
+            max : Union[int, None] (default value is None)
                 Maximum number of comments to get
                 (if not set, will scrape all the comments)
 
         Returns
-        ----------
-            dict[dict] : all the scraped comments (each represented as a dict and having a list as one of 
-                         their values, listing all their replies, themselves represented as dicts)
-                         (the comments' url act as the dict's keys)
+        -------
+            Dict[str, Dict] : a dictionary of dictionaries where each key-value pair represents a different comment
+                Each value has its key as the comment's URL and follows the structure :
+                    comment_URL : {
+                        "username": comment_username, 
+                        "text": comment_text, 
+                        "datetime": comment_datetime,
+                        "likes count": comment_likes_count,
+                        "replies": [
+                            {
+                                "username": reply_username, 
+                                "text": reply_text, 
+                                "datetime": reply_datetime,
+                                "likes count": reply_likes_count
+                            },
+                        ]
+                    }
 
         Raises
-        ----------
+        ------
             TypeError
                 If max argument is not an integer or None.
         """
@@ -706,7 +729,7 @@ class InstagramPost(Instagram):
         # find comment section of the post
         comments_selector = "//a/time[@datetime]" + "/.."*9 + "/parent::div"
         comment_section_selector = comments_selector + "/.."*3
-        no_comments_selector = "//span[text()='No comments yet.']" # selector for when post has no comments
+        no_comments_selector = "//*[text()='No comments yet.']" # selector for when post has no comments
         comment_section_selector = f"{comment_section_selector}|{no_comments_selector}"
         comment_section = WebDriverWait(self.driver, 30).until(
             EC.presence_of_element_located((By.XPATH, comment_section_selector)))
@@ -829,21 +852,22 @@ class InstagramPost(Instagram):
                     break
         return post_comments
     
-    def print_comments(self, max=None):
+    def print_comments(self, 
+                       max: Union[int, None] = None) -> None:
         """
         Prints comments published under the post.
         
-        Uses self.get_comments method, but instead of returning a dictionary, 
+        Uses .get_comments() method, but instead of returning a dictionary, 
         prints a JSON version of the dictionary for better readability.
 
         Args
-        ----------
-            max : int or NoneType
+        ----
+            Union[int, None] (default value is None)
                 Maximum number of comments to get
                 (if not set, will print all the comments)
 
         Raises
-        ----------
+        ------
             TypeError
                 If max argument is not an integer or None.
         """
@@ -858,12 +882,12 @@ class InstagramPost(Instagram):
         # print JSON version of the dictionary
         print(comments_to_json)
     
-    def __get_like_button(self):
+    def __get_like_button(self) -> selenium.webdriver.remote.webelement.WebElement:
         """
         Finds the like (or unlike) button element.
 
         Returns
-        ----------
+        -------
             selenium.webdriver.remote.webelement.WebElement : the WebElement representing the like (or unlike) button
         """
         # selector for when post has not been liked
@@ -876,7 +900,7 @@ class InstagramPost(Instagram):
             EC.element_to_be_clickable((By.XPATH, button_selector)))
         return button
     
-    def like_post(self):
+    def like_post(self) -> None:
         """
         Adds a like to the post.
         """
@@ -917,7 +941,7 @@ class InstagramPost(Instagram):
                 if current_color != previous_color:
                     break
 
-    def unlike_post(self):
+    def unlike_post(self) -> None:
         """
         Removes user's like from the post.
         """
@@ -959,21 +983,23 @@ class InstagramPost(Instagram):
                 if current_color != previous_color:
                     break
         
-    def add_comment(self, comment_text):
+    def add_comment(self, 
+                    comment_text: str) -> Tuple[str, Dict[str, str]]:
         """
         Adds a comment to the post.
 
         Args
-        ----------
+        ----
             comment_text : str
                 Text of comment
 
         Returns
-        ----------
-            tuple : the link to the comment, if the comment was shared successfully, as well as a dict containing its data
-
+        -------
+            Tuple[str, Dict[str, str]] : the comment's URL (if the comment was shared successfully)
+                and a dict containing its data (four string key-value pairs: datetime, url, publisher and text)
+            
         Raises
-        ----------
+        ------
             TypeError
                 If comment_text argument is not a string or is empty.
             LimitedCommentsException
@@ -1028,23 +1054,25 @@ class InstagramPost(Instagram):
             # if limited comments, unable to add comment : raise LimitedCommentsException
             raise LimitedCommentsException
 
-    def __find_comment(self, comment_url, levels):
+    def __find_comment(self, 
+                       comment_url: str, 
+                       levels: int) -> selenium.webdriver.remote.webelement.WebElement:
         """
         Finds comment element that corresponds to a specific URL.
 
         Args
-        ----------
+        ----
             comment_url : str
                 URL of a comment
             levels : int
                 Number of levels to get parent element from comment element
 
         Returns
-        ----------
+        -------
             selenium.webdriver.remote.webelement.WebElement : the comment WebElement that has comment_url as its href
 
         Raises
-        ----------
+        ------
             IncorrectLinkException
                 If comment_url is not under the post or does not lead to an existing comment.
         """
@@ -1085,17 +1113,18 @@ class InstagramPost(Instagram):
         ActionChains(self.driver).move_to_element(comment).perform()
         return comment
 
-    def delete_comment(self, comment_url):
+    def delete_comment(self, 
+                       comment_url: str) -> None:
         """
         Deletes a comment posted by user.
 
         Args
-        ----------
+        ----
             comment_url : str
                 URL of the comment to delete
 
         Raises
-        ----------
+        ------
             TypeError
                 If comment_url argument is not a string or is empty.
             IncorrectLinkException
@@ -1137,18 +1166,21 @@ class InstagramPost(Instagram):
         WebDriverWait(self.driver, 30).until(EC.staleness_of(delete_button))
 
 
-    def __get_comment_like_button(self, comment):
+    def __get_comment_like_button(self, 
+                                  comment: selenium.webdriver.remote.webelement.WebElement) \
+                                    -> selenium.webdriver.remote.webelement.WebElement:
         """
         Finds the like (or unlike) button element of the comment.
 
         Args
-        ----------
+        ----
             comment : selenium.webdriver.remote.webelement.WebElement
                 the WebElement representing the comment
 
         Returns
-        ----------
-            selenium.webdriver.remote.webelement.WebElement : the WebElement representing the like (or unlike) button of the comment.
+        -------
+            selenium.webdriver.remote.webelement.WebElement : the WebElement representing \
+                the like (or unlike) button of the comment.
         """
         # selector for when comment has not been liked
         like_button_selector = ".//*[@aria-label='Like']"
@@ -1160,17 +1192,18 @@ class InstagramPost(Instagram):
             EC.element_to_be_clickable((By.XPATH, button_selector)))
         return button
 
-    def like_comment(self, comment_url):
+    def like_comment(self, 
+                     comment_url: str) -> None:
         """
         Adds a like to a comment.
 
         Args
-        ----------
+        ----
             comment_url : str
                 URL of a comment
         
         Raises
-        ----------
+        ------
             TypeError
                 If comment_url argument is not a string or is empty.
             IncorrectLinkException
@@ -1218,17 +1251,18 @@ class InstagramPost(Instagram):
                 if current_color != previous_color:
                     break
 
-    def unlike_comment(self, comment_url):
+    def unlike_comment(self, 
+                       comment_url: str) -> None:
         """
         Removes user's like from a comment.
 
         Args
-        ----------
+        ----
             comment_url : str
                 URL of a comment
         
         Raises
-        ----------
+        ------
             TypeError
                 If comment_url argument is not a string or is empty.
             IncorrectLinkException
@@ -1276,19 +1310,21 @@ class InstagramPost(Instagram):
                 if current_color != previous_color:
                     break
 
-    def add_reply(self, comment_url, reply_text):
+    def add_reply(self, 
+                  comment_url: str, 
+                  reply_text: str) -> None:
         """
         Adds a reply to a comment under the post.
 
         Args
-        ----------
+        ----
             comment_url : str
                 URL of a comment
             reply_text : str
                 text of reply
         
         Raises
-        ----------
+        ------
             TypeError
                 If comment_url or reply_text arguments are not strings or are empty.
             LimitedCommentsException
@@ -1328,19 +1364,21 @@ class InstagramPost(Instagram):
             # raise LimitedCommentsException if comments are indeed limited
             raise LimitedCommentsException
         
-    def delete_reply(self, comment_url, reply_text):
+    def delete_reply(self, 
+                     comment_url: str, 
+                     reply_text: str) -> None:
         """
         Deletes a reply to a comment under the post.
 
         Args
-        ----------
+        ----
             comment_url : str
                 URL of a comment
             reply_text : str
                 text of reply
         
         Raises
-        ----------
+        ------
             TypeError
                 If comment_url or reply_text arguments are not strings or are empty.
             ReplyNotFoundException
