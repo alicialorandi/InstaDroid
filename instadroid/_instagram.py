@@ -3,13 +3,11 @@ from ._exceptions import BlockedAccountException, IncorrectCredentialsException,
 from abc import ABC
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException, WebDriverException
-from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from typing import Tuple, Union
 from selenium_stealth import stealth
-from webdriver_manager.chrome import ChromeDriverManager
 
 import re
 import requests
@@ -48,8 +46,6 @@ class Instagram(ABC):
             headless : bool
                 whether the webdriver is headless or not        
         """
-        # create a new Service instance and specify path to Chromedriver executable
-        service = Service(executable_path=ChromeDriverManager().install())
         # change browser properties
         options = webdriver.ChromeOptions()
         if headless:
@@ -62,8 +58,7 @@ class Instagram(ABC):
         options.add_argument("--disable-dev-shm-usage")
         options.add_experimental_option("excludeSwitches", ["enable-logging"])
         # create a new driver instance
-        self.driver = webdriver.Chrome(service=service, 
-                                       options=options)
+        self.driver = webdriver.Chrome(options=options)
         # apply stealth mode to help prevent bot detection
         stealth(self.driver,
                 languages=["en-US", "en"],
