@@ -3,7 +3,7 @@ from ._exceptions import BlockedAccountException, IncorrectCredentialsException,
 from abc import ABC
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException, WebDriverException
-from selenium.webdriver.chrome.service import Service as ChromeService
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
@@ -11,8 +11,6 @@ from typing import Tuple, Union
 from selenium_stealth import stealth
 from webdriver_manager.chrome import ChromeDriverManager
 
-import os
-import platform
 import re
 import requests
 import types
@@ -40,16 +38,6 @@ class Instagram(ABC):
         except requests.ConnectionError:
             return False
         
-    def __kill_chrome_processes(self):
-        if platform.system() == "Windows":
-            # close Google Chrome
-            os.system("taskkill /IM chrome.exe /F")
-            # close ChromeDriver
-            os.system("taskkill /IM chromedriver.exe /F")
-        else:  # Linux/macOS
-            os.system("pkill -f chrome || true")
-            os.system("pkill -f chromedriver || true")
-
     def __open_webdriver(self, 
                          headless: bool) -> None:
         """
@@ -60,10 +48,8 @@ class Instagram(ABC):
             headless : bool
                 whether the webdriver is headless or not        
         """
-        # kill chrome processes
-        self.__kill_chrome_processes()
         # create a new Service instance and specify path to Chromedriver executable
-        service = ChromeService(executable_path=ChromeDriverManager().install())
+        service = Service(executable_path=ChromeDriverManager().install())
         # change browser properties
         options = webdriver.ChromeOptions()
         if headless:
