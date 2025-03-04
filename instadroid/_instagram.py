@@ -50,6 +50,7 @@ class Instagram(ABC):
         options = webdriver.ChromeOptions()
         if headless:
             options.add_argument('--headless=new')
+        options.add_argument("--guest")
         options.add_argument("--disable-blink-features=AutomationControlled")
         options.add_argument("--disable-popup-blocking")
         options.add_argument("--start-maximized")
