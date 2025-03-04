@@ -3,14 +3,13 @@ from ._exceptions import BlockedAccountException, IncorrectCredentialsException,
 from abc import ABC
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException, WebDriverException
-from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from typing import Tuple, Union
 from selenium_stealth import stealth
-from webdriver_manager.chrome import ChromeDriverManager
 
+import chromedriver_autoinstaller
 import re
 import requests
 import types
@@ -48,6 +47,8 @@ class Instagram(ABC):
             headless : bool
                 whether the webdriver is headless or not        
         """
+        # install chromedriver
+        chromedriver_autoinstaller.install()
         # change browser properties
         options = webdriver.ChromeOptions()
         if headless:
