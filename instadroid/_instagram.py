@@ -3,11 +3,13 @@ from ._exceptions import BlockedAccountException, IncorrectCredentialsException,
 from abc import ABC
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException, WebDriverException
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from typing import Tuple, Union
 from selenium_stealth import stealth
+from webdriver_manager.chrome import ChromeDriverManager
 
 import re
 import requests
@@ -50,7 +52,6 @@ class Instagram(ABC):
         options = webdriver.ChromeOptions()
         if headless:
             options.add_argument('--headless=new')
-        options.add_argument("--guest")
         options.add_argument("--disable-blink-features=AutomationControlled")
         options.add_argument("--disable-popup-blocking")
         options.add_argument("--start-maximized")
