@@ -79,10 +79,13 @@ class Instagram(ABC):
         """
         # find "accept cookies" button
         cookie_button_selector = "//button[contains(text(), 'cookies')]"
-        cookie_button = WebDriverWait(self.driver, 30).until(
-            EC.presence_of_element_located((By.XPATH, cookie_button_selector)))
-        # click button
-        cookie_button.click()
+        try:
+            cookie_button = WebDriverWait(self.driver, 30).until(
+                EC.presence_of_element_located((By.XPATH, cookie_button_selector)))
+            # click button
+            cookie_button.click()
+        except TimeoutException:
+            self.driver.save_screenshot("cookies_not_found.png")
 
     def __log_in(self, 
                  username: str, 
@@ -210,9 +213,11 @@ class Instagram(ABC):
             raise NoInternetConnectionException
         # create a webdriver object and set properties
         self.__open_webdriver(headless)
+        self.driver.save_screenshot("webdriver_opened.png")
         # get instagram log in page
         instagram_url = "https://www.instagram.com"
         self.driver.get(instagram_url)
+        self.driver.save_screenshot("instagram_opened.png")
         try:
             # accept cookies
             self.__accept_cookies()

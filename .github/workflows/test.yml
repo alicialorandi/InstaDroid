@@ -39,3 +39,10 @@ jobs:
 
             - name: Run tests
               run: pytest
+
+            - name: Upload test screenshots
+              uses: actions/upload-artifact@v3
+              if: failure()
+              with:
+                name: screenshots
+                path: "*.png"
