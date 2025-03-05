@@ -661,7 +661,7 @@ class TestInstagramPostWebAutomation:
         current_datetime = str(current_datetime)
         current_datetime = current_datetime.replace(":", "-")
         current_datetime = current_datetime.replace(".", "-")
-        self.driver.save_screenshot(f"{current_datetime}_after_comment_deleted.png")
+        instagram_post.driver.save_screenshot(f"{current_datetime}_after_comment_deleted.png")
         try:
             # find comment element corresponding to comment_url
             comment_url = comment_url.replace("https://www.instagram.com", "")
@@ -777,7 +777,7 @@ class TestInstagramPostWebAutomation:
         current_datetime = str(current_datetime)
         current_datetime = current_datetime.replace(":", "-")
         current_datetime = current_datetime.replace(".", "-")
-        self.driver.save_screenshot(f"{current_datetime}_after_reply_deleted.png")
+        instagram_post.driver.save_screenshot(f"{current_datetime}_after_reply_deleted.png")
         # assert last reply's username and text don't match user's username and posted reply's text 
         # (i.e. would mean reply did not get deleted)
         if (last_reply_username == username) and (last_reply_text == reply_text):
@@ -788,7 +788,7 @@ class TestInstagramPostWebAutomation:
             current_datetime = str(current_datetime)
             current_datetime = current_datetime.replace(":", "-")
             current_datetime = current_datetime.replace(".", "-")
-            self.driver.save_screenshot(f"{current_datetime}_after_reply_deleted.png")
+            instagram_post.driver.save_screenshot(f"{current_datetime}_after_reply_deleted.png")
             # get comment last reply
             last_reply_username, last_reply_text = self.__get_last_reply(instagram_post, comment_url)
             # assert last reply's username and text don't match user's username and posted reply's text 
