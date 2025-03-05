@@ -78,13 +78,14 @@ class Instagram(ABC):
     
     def _is_testing(self) -> bool:
         """
-        Check if the script is running under Pytest or GitHub Actions.
+        Check if the script is running under GitHub Actions. 
+        (Turn headless mode off in test files if you want to display browser)
 
         Returns
         -------
             bool : True if the code is being tested, False if not
         """
-        if (os.getenv("GITHUB_ACTIONS") == "true") or ("pytest" in sys.modules):
+        if os.getenv("GITHUB_ACTIONS") == "true":
             return True
         else:
             return False
@@ -185,13 +186,13 @@ class Instagram(ABC):
         # selector for when sleep mode is on
         sleep_mode_selector = "//h3[contains(text(),'sleep mode')]"
         while True:
+            # take screeshot if test
+            self._save_screenshot("login_status")
             # find any of the elements above
             log_in_status_selector = f"{home_button_selector}|{account_blocked_selector} \
                 |{incorrect_creds_selector}|{time_limit_reached_selector}|{sleep_mode_selector}"
             log_in_status = WebDriverWait(self.driver, 30).until(
                 EC.presence_of_element_located((By.XPATH, log_in_status_selector)))
-            # take screeshot if test
-            self._save_screenshot("login_status")
             if log_in_status.tag_name == "div":
                 # if credentials are incorrect, raise IncorrectCredentialsException
                 raise IncorrectCredentialsException
