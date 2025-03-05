@@ -101,6 +101,9 @@ class Instagram(ABC):
         """
         if self._is_testing():
             current_datetime = datetime.datetime.now()
+            current_datetime = str(current_datetime)
+            current_datetime = current_datetime.replace(":", "-")
+            current_datetime = current_datetime.replace(".", "-")
             self.driver.save_screenshot(f"{current_datetime}_{filename}.png")
 
     def __log_in(self, 
