@@ -195,7 +195,7 @@ class Instagram(ABC):
             except TimeoutException:
                 # take screeshot if test
                 self._save_screenshot("login_status_failed")
-                raise Exception
+                raise TimeoutException
             # take screeshot if test
             self._save_screenshot("login_status")
             if log_in_status.tag_name == "div":
