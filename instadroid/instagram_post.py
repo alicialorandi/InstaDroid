@@ -26,14 +26,14 @@ class InstagramPost(Instagram):
     Simulates post interactions and scrapes its data.
 
     Can be used within a context manager, to allocate and release resources. 
-    If used without, make sure to use .close() function to close the automated browser controlled by selenium.
+    If used without, make sure to use .close() function to close the automated browser controlled by Selenium.
 
     Args
     ----
         post_url : str
             URL of the post
         driver : Union[selenium.webdriver.Chrome, None] (default value is None)
-            automated browser controlled by selenium
+            automated browser controlled by Selenium
             (if None, user_creds has to be passed in)
         user_creds : Union[Tuple[str, str], None] (default value is None)
             user's credentials
@@ -45,7 +45,7 @@ class InstagramPost(Instagram):
     Attributes
     ----------
         driver : selenium.webdriver.Chrome
-            automated browser controlled by selenium
+            automated browser controlled by Selenium
         url : str
             URL of the post
         user : Union[str, list]
@@ -162,6 +162,8 @@ class InstagramPost(Instagram):
             # get post url if not already on page
             if self.driver.current_url != self.url:
                 self.driver.get(self.url)
+                # take screeshot if test
+                self._save_screenshot("page_reached")
         except MaxRetryError:
             raise ClosedWebdriverException
         # check if log in was succesful
@@ -567,7 +569,9 @@ class InstagramPost(Instagram):
                 if likes_count.tag_name == "a":
                     # if post has likes list, click "liked by" button to show likes window
                     self.driver.execute_script("arguments[0].click();", 
-                                            likes_count)
+                                               likes_count)
+                    # take screeshot if test
+                    self._save_screenshot("likes_window_opened")
                     # find likes window element
                     top_section_selector = "//h2"
                     frame_selector = top_section_selector + "/.."*2 + "//div[contains(@style, 'hidden auto')]"
@@ -723,7 +727,9 @@ class InstagramPost(Instagram):
         if (not isinstance(max, int)) and (max is not None):
             raise TypeError("'max' argument must be None or an integer.")
         # get post's page
-        self.driver.get(self.url) 
+        self.driver.get(self.url)
+        # take screeshot if test
+        self._save_screenshot("page_reached") 
         # create dict that will contain comments
         post_comments = dict()
         # find comment section of the post
@@ -940,6 +946,8 @@ class InstagramPost(Instagram):
                     current_color = Color.from_string(button.value_of_css_property("fill"))
                 if current_color != previous_color:
                     break
+        # take screeshot if test
+        self._save_screenshot("post_liked")
 
     def unlike_post(self) -> None:
         """
@@ -982,6 +990,8 @@ class InstagramPost(Instagram):
                     current_color = Color.from_string(button.value_of_css_property("fill"))
                 if current_color != previous_color:
                     break
+        # take screeshot if test
+        self._save_screenshot("post_unliked")
         
     def add_comment(self, 
                     comment_text: str) -> Tuple[str, Dict[str, str]]:
@@ -1032,6 +1042,8 @@ class InstagramPost(Instagram):
                 comment_input.send_keys(comment_text + Keys.ENTER)
                 # wait for text to be sent
                 WebDriverWait(self.driver, 30).until(InputBarHasCleared())
+                # take screeshot if test
+                self._save_screenshot("comment_submitted")
             except StaleElementReferenceException:
                 # if StaleElementReferenceException occurs, find comment input bar again
                 comment_input = self.driver.find_element(By.XPATH, 
@@ -1040,6 +1052,8 @@ class InstagramPost(Instagram):
                 comment_input.send_keys(comment_text + Keys.ENTER)
                 # wait for text to be sent
                 WebDriverWait(self.driver, 30).until(InputBarHasCleared())
+                # take screeshot if test
+                self._save_screenshot("comment_submitted")
             # find all comments to compare to comment that was just shared
             comments_selector = "//a/time[@datetime]" + "/.."*9 + "/parent::div"
             # wait until presence of element representing comment that has just been posted
@@ -1097,7 +1111,9 @@ class InstagramPost(Instagram):
                 current_url = current_url.replace(f"?img_index={ends_with_digits}", "")
         # get page if not already on it
         if current_url != comment_url:
-            self.driver.get(comment_url) 
+            self.driver.get(comment_url)
+            # take screeshot if test
+            self._save_screenshot("page_reached") 
         # check existence of comment_url
         # (if link to comment does not exist, self.driver.current_url will switch to self.url 
         # (+ "?img_index=1" if post is carousel) instead of being equal to comment_url)
@@ -1156,6 +1172,8 @@ class InstagramPost(Instagram):
                                                                      comment_options_button_selector)
         # click button
         comment_options_button.click()
+        # take screeshot if test
+        self._save_screenshot("comment_options_button_clicked")
         # find "Delete" button
         delete_button_selector = "//button[text()='Delete']"
         delete_button = WebDriverWait(self.driver, 30).until(
@@ -1164,6 +1182,8 @@ class InstagramPost(Instagram):
         delete_button.click()
         # wait until delete_button no longer attached to DOM
         WebDriverWait(self.driver, 30).until(EC.staleness_of(delete_button))
+        # take screeshot if test
+        self._save_screenshot("delete_comment_button_clicked")
 
 
     def __get_comment_like_button(self, 
@@ -1250,6 +1270,8 @@ class InstagramPost(Instagram):
                     current_color = Color.from_string(button.value_of_css_property("fill"))
                 if current_color != previous_color:
                     break
+        # take screeshot if test
+        self._save_screenshot("comment_liked")
 
     def unlike_comment(self, 
                        comment_url: str) -> None:
@@ -1309,6 +1331,8 @@ class InstagramPost(Instagram):
                     current_color = Color.from_string(button.value_of_css_property("fill"))
                 if current_color != previous_color:
                     break
+        # take screeshot if test
+        self._save_screenshot("comment_unliked")
 
     def add_reply(self, 
                   comment_url: str, 
@@ -1347,6 +1371,8 @@ class InstagramPost(Instagram):
                                                 reply_button_selector)
             # click reply button
             reply_button.click()
+            # take screeshot if test
+            self._save_screenshot("reply_button_clicked")
             # find comment input bar 
             comment_input_selector = "textarea[class]"
             comment_input = self.driver.find_element(By.CSS_SELECTOR, 
@@ -1355,6 +1381,8 @@ class InstagramPost(Instagram):
             comment_input.send_keys(reply_text + Keys.ENTER)
             # wait for text to be sent
             WebDriverWait(self.driver, 30).until(InputBarHasCleared())
+            # take screeshot if test
+            self._save_screenshot("reply_submitted")
         # if comments are limited, no reply button and no comment input bar
         except NoSuchElementException:
             # assure presence of "Comments on this post have been limited" message
@@ -1422,6 +1450,8 @@ class InstagramPost(Instagram):
                                                         view_replies_selector)
                 except NoSuchElementException:
                     break
+        # take screeshot if test
+        self._save_screenshot("comment_replies_displayed")
         # find comment's replies
         replies_selector = ".//span[contains(text(), ' replies')]" + "/.."*5 + "/ul/div"
         try:
@@ -1452,6 +1482,8 @@ class InstagramPost(Instagram):
                     # scroll to reply
                     self.driver.execute_script("arguments[0].scrollIntoView();", 
                                                reply)
+                    # take screeshot if test
+                    self._save_screenshot("reply_to_delete_found")
                     # move mouse to reply
                     ActionChains(self.driver).move_to_element(reply).perform()
                     # find "Comment Options" button
@@ -1464,6 +1496,8 @@ class InstagramPost(Instagram):
                                                                                  comment_options_button_selector)
                     # click button
                     comment_options_button.click()
+                    # take screeshot if test
+                    self._save_screenshot("comment_options_button_clicked")
                     # find "Delete" button
                     delete_button_selector = "//button[text()='Delete']"
                     delete_button = WebDriverWait(self.driver, 30).until(
@@ -1472,6 +1506,8 @@ class InstagramPost(Instagram):
                     delete_button.click()
                     # wait until delete_button no longer attached to DOM
                     WebDriverWait(self.driver, 30).until(EC.staleness_of(delete_button))
+                    # take screeshot if test
+                    self._save_screenshot("delete_reply_button_clicked")
                     # exit function
                     return
             if replies[-1] == last_reply:
@@ -1482,24 +1518,4 @@ class InstagramPost(Instagram):
                                        last_reply)
         # if end of function reached, means reply was not found
         raise ReplyNotFoundException
-
-
-# def __check_link(self):
-#     incorrect_link_selector = "//a[text()='Go back to Instagram.']"
-#     correct_link_selector = "//div[@role='button']"
-#     element = WebDriverWait(self.driver, 30).until(EC.presence_of_element_located((By.XPATH, f"{incorrect_link_selector}|{correct_link_selector}")))
-#     if element.tag_name == "a":
-#         raise IncorrectLinkException
-#     else:
-#         if isinstance(self, InstagramPost):
-#             if "https://www.instagram.com/p/" not in self.url:
-#                 raise IncorrectLinkException(f"The link {self.url} does not lead to a post.")
-#         elif isinstance(self, InstagramProfile):
-#             if "https://www.instagram.com/p/" in self.url:
-#                 raise IncorrectLinkException(f"The link {self.url} does not lead to a profile.")
-#             else:
-#                 try:
-#                     followers_selector = "//a[text()=' followers']"
-#                     self.driver.find_element(By.XPATH, followers_selector)
-#                 except NoSuchElementException:
-#                     raise IncorrectLinkException(f"The link {self.url} does not lead to a profile.")
+    
