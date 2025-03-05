@@ -649,30 +649,32 @@ class TestInstagramPostWebAutomation:
         # testing delete_comment()
         # delete comment that was just posted
         instagram_post.delete_comment(comment_url)
-        # get post page and refresh page
-        instagram_post.driver.get(instagram_post.url)
-        instagram_post.driver.refresh()
-        # wait until comments are visible
-        comments_selector = "//a/time[@datetime]" + "/.."*9 + "/parent::div"
-        WebDriverWait(instagram_post.driver, 30).until(
-            EC.visibility_of_all_elements_located((By.XPATH, comments_selector)))
-        if os.getenv("GITHUB_ACTIONS") == "true":
-            # take screenshot
-            current_datetime = datetime.datetime.now()
-            current_datetime = str(current_datetime)
-            current_datetime = current_datetime.replace(":", "-")
-            current_datetime = current_datetime.replace(".", "-")
-            instagram_post.driver.save_screenshot(f"{current_datetime}_after_comment_deleted.png")
-        try:
-            # find comment element corresponding to comment_url
-            comment_url = comment_url.replace("https://www.instagram.com", "")
-            comment_selector = f"//a[@href='{comment_url}']" + "/.."
-            instagram_post.driver.find_element(By.XPATH, 
-                                               comment_selector)
-            assert False, \
-                f"Delete_comment() failed : {comment_url} did not get deleted"
-        except NoSuchElementException:
-            assert True
+        # check if comment still present
+        TRY_COUNT = 3
+        for _try in range(TRY_COUNT):
+            # get post page
+            instagram_post.driver.get(instagram_post.url)
+            # wait until comments are visible
+            comments_selector = "//a/time[@datetime]" + "/.."*9 + "/parent::div"
+            WebDriverWait(instagram_post.driver, 30).until(
+                EC.visibility_of_all_elements_located((By.XPATH, comments_selector)))
+            if os.getenv("GITHUB_ACTIONS") == "true":
+                # take screenshot
+                current_datetime = datetime.datetime.now()
+                current_datetime = str(current_datetime)
+                current_datetime = current_datetime.replace(":", "-")
+                current_datetime = current_datetime.replace(".", "-")
+                instagram_post.driver.save_screenshot(f"{current_datetime}_after_comment_deleted.png")
+            try:
+                # find comment element corresponding to comment_url
+                comment_url = comment_url.replace("https://www.instagram.com", "")
+                comment_selector = f"//a[@href='{comment_url}']" + "/.."
+                instagram_post.driver.find_element(By.XPATH, 
+                                                   comment_selector)
+            except NoSuchElementException:
+                return
+        assert False, \
+            f"Delete_comment() failed : {comment_url} did not get deleted"
 
     def __get_last_reply(self, 
                          instagram_post: InstagramPost, 
