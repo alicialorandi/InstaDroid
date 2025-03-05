@@ -12,7 +12,6 @@ setup(
     license="GPLv3",
     packages=find_packages(),
     install_requires=[
-        "chromedriver-autoinstaller",
         "python-dotenv",
         "pytz",
         "requests",

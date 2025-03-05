@@ -9,7 +9,6 @@ from selenium.webdriver.support.ui import WebDriverWait
 from typing import Tuple, Union
 from selenium_stealth import stealth
 
-import chromedriver_autoinstaller
 import re
 import requests
 import types
@@ -47,8 +46,6 @@ class Instagram(ABC):
             headless : bool
                 whether the webdriver is headless or not        
         """
-        # install chromedriver
-        chromedriver_autoinstaller.install()
         # change browser properties
         options = webdriver.ChromeOptions()
         if headless:
