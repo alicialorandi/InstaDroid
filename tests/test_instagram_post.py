@@ -68,8 +68,7 @@ class TestInstagramPostLogIn:
             # try logging in with test parameters
             InstagramPost(post_url=self.post_url,
                           driver=driver, 
-                          user_creds=user_creds,
-                          headless_browser=False)
+                          user_creds=user_creds)
             # exception should be raised so if successful log in, test fails
             assert False
         except Exception as e:
@@ -105,8 +104,7 @@ class TestInstagramPostWebScraping:
         """
         post_url = "https://www.instagram.com/p/C9zsEnZOc2j/"
         post = InstagramPost(post_url=post_url, 
-                             user_creds=user_creds,
-                             headless_browser=False)
+                             user_creds=user_creds)
         # close post at the end of class tests
         yield post
         post.close()
@@ -396,8 +394,7 @@ class TestInstagramPostWebAutomation:
         """
         post_url = "https://www.instagram.com/p/DC7MHx9S_1R/"
         post = InstagramPost(post_url=post_url, 
-                             user_creds=user_creds,
-                             headless_browser=False)
+                             user_creds=user_creds)
         yield post
         # close post at the end of class tests
         post.close()
