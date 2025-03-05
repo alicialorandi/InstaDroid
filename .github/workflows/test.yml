@@ -24,8 +24,8 @@ jobs:
               with:
                 python-version: ${{ matrix.python-version }}
 
-            - name: Removing previous chrome instances on runner 
-              run: sudo apt purge google-chrome-stable  
+            - name: Check Chrome version
+              run: google-chrome --version  
 
             - name: Set up environment variables from GitHub Secrets
               run: |
