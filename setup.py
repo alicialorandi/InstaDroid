@@ -16,7 +16,8 @@ setup(
         "pytz",
         "requests",
         "selenium",
-        "selenium-stealth"
+        "selenium-stealth",
+        "webdriver_manager"
     ],
     extras_require={
         "test": ["pytest"]
