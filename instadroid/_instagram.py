@@ -194,7 +194,7 @@ class Instagram(ABC):
                     EC.presence_of_element_located((By.XPATH, log_in_status_selector)))
             except TimeoutException:
                 # take screeshot if test
-                self._save_screenshot("login_status")
+                self._save_screenshot("login_status_failed")
                 raise Exception
             # take screeshot if test
             self._save_screenshot("login_status")
