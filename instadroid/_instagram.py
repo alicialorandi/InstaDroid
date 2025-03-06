@@ -15,6 +15,7 @@ import datetime
 import os
 import re
 import requests
+import sys
 import types
 
 
@@ -75,10 +76,22 @@ class Instagram(ABC):
                 renderer="Intel Iris OpenGL Engine",
                 fix_hairline=True)
     
-    def _is_testing(self) -> bool:
+    def __is_exectuted_by_pytest(self) -> bool:
         """
-        Check if the script is running under GitHub Actions. 
-        (Turn headless mode off in test files if you want to display browser)
+        Check if the script is running under Pytest.
+
+        Returns
+        -------
+            bool : True if the code is being tested, False if not
+        """
+        if "pytest" in sys.modules:
+            return True
+        else:
+            return False
+        
+    def __is_exectuted_by_github_actions(self) -> bool:
+        """
+        Check if the script is running under GitHub Actions.
 
         Returns
         -------
@@ -88,6 +101,24 @@ class Instagram(ABC):
             return True
         else:
             return False
+        
+    def __create_screenshot_dir(self) -> str:
+        """
+        Creates a directory to save screenshots when testing.
+
+        Returns
+        -------
+            str : path to the directory
+        """
+        # find package dir from file
+        package_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        # get test dir path
+        test_dir = os.path.join(package_dir, "tests")
+        # create screenshot dir
+        screenshot_dir = os.path.join(test_dir, "screenshots")
+        if not os.path.exists(screenshot_dir):
+            os.mkdir(screenshot_dir)
+        return screenshot_dir
         
     def _save_screenshot(self,
                          filename: str) -> None:
@@ -99,12 +130,17 @@ class Instagram(ABC):
             filename : str
                 Name of the file to save
         """
-        if self._is_testing():
+        if self.__is_exectuted_by_github_actions() or self.__is_exectuted_by_pytest():
             current_datetime = datetime.datetime.now()
             current_datetime = str(current_datetime)
             current_datetime = current_datetime.replace(":", "-")
             current_datetime = current_datetime.replace(".", "-")
-            self.driver.save_screenshot(f"{current_datetime}_{filename}.png")
+            if self.__is_exectuted_by_github_actions():
+                self.driver.save_screenshot(f"{current_datetime}_{filename}.png")
+            else:
+                dir_path = self.__create_screenshot_dir()
+                screenshot_path = os.path.join(dir_path, f"{current_datetime}_{filename}.png")
+                self.driver.save_screenshot(screenshot_path)
 
     def __log_in(self, 
                  username: str, 
@@ -131,8 +167,8 @@ class Instagram(ABC):
                                                   password_input_selector)
         password_input.clear()
         password_input.send_keys(password)
-        # take screeshot if test
-        self._save_screenshot("login_performed")
+        # take screenshot if test
+        self._save_screenshot("creds_submitted")
         # submit credentials
         submit_button_selector = "[type='submit']"
         submit_button = self.driver.find_element(By.CSS_SELECTOR, 
@@ -190,12 +226,12 @@ class Instagram(ABC):
                 log_in_status_selector = f"{home_button_selector}|{account_blocked_selector} \
                     |{incorrect_creds_selector}|{time_limit_reached_selector}|{sleep_mode_selector}"
                 log_in_status = WebDriverWait(self.driver, 30).until(
-                    EC.presence_of_element_located((By.XPATH, log_in_status_selector)))
+                    EC.visibility_of_element_located((By.XPATH, log_in_status_selector)))
             except TimeoutException:
-                # take screeshot if test
-                self._save_screenshot("login_status_failed")
+                # take screenshot if test
+                self._save_screenshot("unknown_login_status")
                 raise TimeoutException
-            # take screeshot if test
+            # take screenshot if test
             self._save_screenshot("login_status")
             if log_in_status.tag_name == "div":
                 # if credentials are incorrect, raise IncorrectCredentialsException
@@ -245,21 +281,27 @@ class Instagram(ABC):
         # get instagram log in page
         instagram_url = "https://www.instagram.com"
         self.driver.get(instagram_url)
-        # take screeshot if test
-        self._save_screenshot("instagram_login_page")
         try:
-            # enter and submit credentials
-            self.__log_in(*user_creds)
+            # wait until creds inputs are shown for screenshot
+            username_input_selector = "[name='username']"
+            WebDriverWait(self.driver, 30).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, username_input_selector)))
         except TimeoutException:
+            # take screenshot if test
+            self._save_screenshot("reload_instagram")
             # find and click reload page button
             reload_page_selector = "div[role='button']"
             reload_page = self.driver.find_element(By.CSS_SELECTOR, 
                                                    reload_page_selector)
             reload_page.click()
-            # take screeshot if test
-            self._save_screenshot("instagram_login_page")
-            # enter and submit credentials
-            self.__log_in(*user_creds)
+            # wait until creds inputs are shown for screenshot
+            username_input_selector = "[name='username']"
+            WebDriverWait(self.driver, 30).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, username_input_selector)))
+        # take screenshot if test
+        self._save_screenshot("instagram_login_page")
+        # enter and submit credentials
+        self.__log_in(*user_creds)
         # check if user has logged in correctly
         self._check_logged_in()
 
@@ -325,8 +367,12 @@ class Instagram(ABC):
         # get page if not already on it
         if current_url != self.url:
             self.driver.get(self.url)
-        # take screeshot if test
-        self._save_screenshot("page_reached")
+            # wait until "go to profile page" button is shown for screenshot
+            profile_button_selector = "//span[text()='Profile']" + "/.."*6
+            WebDriverWait(self.driver, 30).until(
+                EC.visibility_of_element_located((By.XPATH, profile_button_selector)))
+            # take screenshot if test
+            self._save_screenshot("page_reached")
 
     def _get_user_username(self) -> str:
         """
@@ -339,7 +385,7 @@ class Instagram(ABC):
         # find "go to profile page" button
         profile_button_selector = "//span[text()='Profile']" + "/.."*6
         profile_button = WebDriverWait(self.driver, 30).until(
-            EC.presence_of_element_located((By.XPATH, profile_button_selector)))
+            EC.visibility_of_element_located((By.XPATH, profile_button_selector)))
         # get "href" attribute
         user_username = profile_button.get_attribute("href")
         # get only username from href

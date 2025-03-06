@@ -162,8 +162,6 @@ class InstagramPost(Instagram):
             # get post url if not already on page
             if self.driver.current_url != self.url:
                 self.driver.get(self.url)
-                # take screeshot if test
-                self._save_screenshot("page_reached")
         except MaxRetryError:
             raise ClosedWebdriverException
         # check if log in was succesful
@@ -544,7 +542,8 @@ class InstagramPost(Instagram):
             TryCountExceeded
                 If method failed 3 times.
         """
-        for _try in range(3):
+        TRY_COUNT = 3
+        for _try in range(TRY_COUNT):
             try:
                 # get post's page if not on it already
                 self._get_self_page()
@@ -570,13 +569,12 @@ class InstagramPost(Instagram):
                     # if post has likes list, click "liked by" button to show likes window
                     self.driver.execute_script("arguments[0].click();", 
                                                likes_count)
-                    # take screeshot if test
-                    self._save_screenshot("likes_window_opened")
                     # find likes window element
                     top_section_selector = "//h2"
                     frame_selector = top_section_selector + "/.."*2 + "//div[contains(@style, 'hidden auto')]"
                     frame = WebDriverWait(self.driver, 30).until(
                         EC.visibility_of_element_located((By.XPATH, frame_selector)))
+                    self._save_screenshot("likes_window_opened") # take screenshot if test
                     # create set to only list unique usernames
                     likes = set()
                     # create list to compare previously found usernames and newly found usernames after scroll
@@ -728,8 +726,6 @@ class InstagramPost(Instagram):
             raise TypeError("'max' argument must be None or an integer.")
         # get post's page
         self.driver.get(self.url)
-        # take screeshot if test
-        self._save_screenshot("page_reached") 
         # create dict that will contain comments
         post_comments = dict()
         # find comment section of the post
@@ -739,6 +735,7 @@ class InstagramPost(Instagram):
         comment_section_selector = f"{comment_section_selector}|{no_comments_selector}"
         comment_section = WebDriverWait(self.driver, 30).until(
             EC.presence_of_element_located((By.XPATH, comment_section_selector)))
+        self._save_screenshot("page_reached_for_comments") # take screenshot if test
         # flag to raise if max value has been reached
         max_reached = False
         if comment_section.tag_name == "div":
@@ -946,7 +943,7 @@ class InstagramPost(Instagram):
                     current_color = Color.from_string(button.value_of_css_property("fill"))
                 if current_color != previous_color:
                     break
-        # take screeshot if test
+        # take screenshot if test
         self._save_screenshot("post_liked")
 
     def unlike_post(self) -> None:
@@ -990,7 +987,7 @@ class InstagramPost(Instagram):
                     current_color = Color.from_string(button.value_of_css_property("fill"))
                 if current_color != previous_color:
                     break
-        # take screeshot if test
+        # take screenshot if test
         self._save_screenshot("post_unliked")
         
     def add_comment(self, 
@@ -1042,7 +1039,7 @@ class InstagramPost(Instagram):
                 comment_input.send_keys(comment_text + Keys.ENTER)
                 # wait for text to be sent
                 WebDriverWait(self.driver, 30).until(InputBarHasCleared())
-                # take screeshot if test
+                # take screenshot if test
                 self._save_screenshot("comment_submitted")
             except StaleElementReferenceException:
                 # if StaleElementReferenceException occurs, find comment input bar again
@@ -1052,7 +1049,7 @@ class InstagramPost(Instagram):
                 comment_input.send_keys(comment_text + Keys.ENTER)
                 # wait for text to be sent
                 WebDriverWait(self.driver, 30).until(InputBarHasCleared())
-                # take screeshot if test
+                # take screenshot if test
                 self._save_screenshot("comment_submitted")
             # find all comments to compare to comment that was just shared
             comments_selector = "//a/time[@datetime]" + "/.."*9 + "/parent::div"
@@ -1112,8 +1109,12 @@ class InstagramPost(Instagram):
         # get page if not already on it
         if current_url != comment_url:
             self.driver.get(comment_url)
-            # take screeshot if test
-            self._save_screenshot("page_reached") 
+            # wait until comments are shown for screenshot
+            comments_selector = "//a/time[@datetime]" + "/.."*9 + "/parent::div"
+            WebDriverWait(self.driver, 30).until(
+                    EC.presence_of_all_elements_located((By.XPATH, comments_selector)))
+            # take screenshot if test
+            self._save_screenshot("comment_page_reached") 
         # check existence of comment_url
         # (if link to comment does not exist, self.driver.current_url will switch to self.url 
         # (+ "?img_index=1" if post is carousel) instead of being equal to comment_url)
@@ -1172,17 +1173,16 @@ class InstagramPost(Instagram):
                                                                      comment_options_button_selector)
         # click button
         comment_options_button.click()
-        # take screeshot if test
-        self._save_screenshot("comment_options_button_clicked")
         # find "Delete" button
         delete_button_selector = "//button[text()='Delete']"
         delete_button = WebDriverWait(self.driver, 30).until(
             EC.element_to_be_clickable((By.XPATH, delete_button_selector)))
+        self._save_screenshot("comment_options_button_clicked") # take screenshot if test
         # click button
         delete_button.click()
         # wait until delete_button no longer attached to DOM
         WebDriverWait(self.driver, 30).until(EC.staleness_of(delete_button))
-        # take screeshot if test
+        # take screenshot if test
         self._save_screenshot("delete_comment_button_clicked")
 
 
@@ -1270,7 +1270,7 @@ class InstagramPost(Instagram):
                     current_color = Color.from_string(button.value_of_css_property("fill"))
                 if current_color != previous_color:
                     break
-        # take screeshot if test
+        # take screenshot if test
         self._save_screenshot("comment_liked")
 
     def unlike_comment(self, 
@@ -1331,7 +1331,7 @@ class InstagramPost(Instagram):
                     current_color = Color.from_string(button.value_of_css_property("fill"))
                 if current_color != previous_color:
                     break
-        # take screeshot if test
+        # take screenshot if test
         self._save_screenshot("comment_unliked")
 
     def add_reply(self, 
@@ -1371,17 +1371,16 @@ class InstagramPost(Instagram):
                                                 reply_button_selector)
             # click reply button
             reply_button.click()
-            # take screeshot if test
-            self._save_screenshot("reply_button_clicked")
             # find comment input bar 
             comment_input_selector = "textarea[class]"
             comment_input = self.driver.find_element(By.CSS_SELECTOR, 
                                                      comment_input_selector)
+            self._save_screenshot("reply_button_clicked") # take screenshot if test
             # send reply_text and enter key to comment input bar
             comment_input.send_keys(reply_text + Keys.ENTER)
             # wait for text to be sent
             WebDriverWait(self.driver, 30).until(InputBarHasCleared())
-            # take screeshot if test
+            # take screenshot if test
             self._save_screenshot("reply_submitted")
         # if comments are limited, no reply button and no comment input bar
         except NoSuchElementException:
@@ -1450,7 +1449,7 @@ class InstagramPost(Instagram):
                                                         view_replies_selector)
                 except NoSuchElementException:
                     break
-        # take screeshot if test
+        # take screenshot if test
         self._save_screenshot("comment_replies_displayed")
         # find comment's replies
         replies_selector = ".//span[contains(text(), ' replies')]" + "/.."*5 + "/ul/div"
@@ -1482,7 +1481,7 @@ class InstagramPost(Instagram):
                     # scroll to reply
                     self.driver.execute_script("arguments[0].scrollIntoView();", 
                                                reply)
-                    # take screeshot if test
+                    # take screenshot if test
                     self._save_screenshot("reply_to_delete_found")
                     # move mouse to reply
                     ActionChains(self.driver).move_to_element(reply).perform()
@@ -1496,17 +1495,16 @@ class InstagramPost(Instagram):
                                                                                  comment_options_button_selector)
                     # click button
                     comment_options_button.click()
-                    # take screeshot if test
-                    self._save_screenshot("comment_options_button_clicked")
                     # find "Delete" button
                     delete_button_selector = "//button[text()='Delete']"
                     delete_button = WebDriverWait(self.driver, 30).until(
                         EC.element_to_be_clickable((By.XPATH, delete_button_selector)))
+                    self._save_screenshot("comment_options_button_clicked") # take screenshot if test
                     # click button
                     delete_button.click()
                     # wait until delete_button no longer attached to DOM
                     WebDriverWait(self.driver, 30).until(EC.staleness_of(delete_button))
-                    # take screeshot if test
+                    # take screenshot if test
                     self._save_screenshot("delete_reply_button_clicked")
                     # exit function
                     return

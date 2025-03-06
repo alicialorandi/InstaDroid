@@ -658,13 +658,8 @@ class TestInstagramPostWebAutomation:
             comments_selector = "//a/time[@datetime]" + "/.."*9 + "/parent::div"
             WebDriverWait(instagram_post.driver, 30).until(
                 EC.visibility_of_all_elements_located((By.XPATH, comments_selector)))
-            if os.getenv("GITHUB_ACTIONS") == "true":
-                # take screenshot
-                current_datetime = datetime.datetime.now()
-                current_datetime = str(current_datetime)
-                current_datetime = current_datetime.replace(":", "-")
-                current_datetime = current_datetime.replace(".", "-")
-                instagram_post.driver.save_screenshot(f"{current_datetime}_after_comment_deleted.png")
+            # take screenshot
+            instagram_post._save_screenshot("after_comment_deleted")
             try:
                 # find comment element corresponding to comment_url
                 comment_url = comment_url.replace("https://www.instagram.com", "")
@@ -775,27 +770,16 @@ class TestInstagramPostWebAutomation:
         instagram_post.driver.refresh()
         # get comment last reply
         last_reply_username, last_reply_text = self.__get_last_reply(instagram_post, comment_url)
-        if os.getenv("GITHUB_ACTIONS") == "true":
-            # take screenshot
-            current_datetime = datetime.datetime.now()
-            current_datetime = str(current_datetime)
-            current_datetime = current_datetime.replace(":", "-")
-            current_datetime = current_datetime.replace(".", "-")
-            instagram_post.driver.save_screenshot(f"{current_datetime}_after_reply_deleted.png")
+        # take screenshot
+        instagram_post._save_screenshot("after_reply_deleted")
         # assert last reply's username and text don't match user's username and posted reply's text 
         # (i.e. would mean reply did not get deleted)
         if (last_reply_username == username) and (last_reply_text == reply_text):
             # refresh page one more time
             instagram_post.driver.refresh()
-            if os.getenv("GITHUB_ACTIONS") == "true":
-                # take screenshot
-                current_datetime = datetime.datetime.now()
-                current_datetime = str(current_datetime)
-                current_datetime = current_datetime.replace(":", "-")
-                current_datetime = current_datetime.replace(".", "-")
-                instagram_post.driver.save_screenshot(f"{current_datetime}_after_reply_deleted.png")
             # get comment last reply
             last_reply_username, last_reply_text = self.__get_last_reply(instagram_post, comment_url)
+            instagram_post._save_screenshot("after_reply_deleted") # take screenshot
             # assert last reply's username and text don't match user's username and posted reply's text 
             if (last_reply_username == username) and (last_reply_text == reply_text):
                 assert False, \
