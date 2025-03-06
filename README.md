@@ -190,10 +190,13 @@ Although the tests are not included in the package, you can run them locally by 
     ```bash
     pip install -e .[test]
     ```
-5. Run the tests:
+5. Make sure the expected data is up to date, in the `tests/data` folder.
+
+6. Run the tests:
     ```bash
     pytest
     ```
+7. After running the tests, a `screenshots` folder will appear in the `tests/data` folder. It contains screenshots of the webdriver during the tests.
 
 <h2 id="license">📜 License</h2>
 
