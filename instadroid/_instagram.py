@@ -2,7 +2,7 @@ from ._exceptions import BlockedAccountException, IncorrectCredentialsException,
 
 from abc import ABC
 from selenium import webdriver
-from selenium.common.exceptions import TimeoutException, WebDriverException
+from selenium.common.exceptions import NoSuchElementException, TimeoutException, WebDriverException
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
@@ -76,7 +76,7 @@ class Instagram(ABC):
                 renderer="Intel Iris OpenGL Engine",
                 fix_hairline=True)
     
-    def __is_exectuted_by_pytest(self) -> bool:
+    def __is_executed_by_pytest(self) -> bool:
         """
         Check if the script is running under Pytest.
 
@@ -89,7 +89,7 @@ class Instagram(ABC):
         else:
             return False
         
-    def __is_exectuted_by_github_actions(self) -> bool:
+    def __is_executed_by_github_actions(self) -> bool:
         """
         Check if the script is running under GitHub Actions.
 
@@ -130,17 +130,33 @@ class Instagram(ABC):
             filename : str
                 Name of the file to save
         """
-        if self.__is_exectuted_by_github_actions() or self.__is_exectuted_by_pytest():
+        if self.__is_executed_by_github_actions() or self.__is_executed_by_pytest():
             current_datetime = datetime.datetime.now()
             current_datetime = str(current_datetime)
             current_datetime = current_datetime.replace(":", "-")
             current_datetime = current_datetime.replace(".", "-")
-            if self.__is_exectuted_by_github_actions():
+            if self.__is_executed_by_github_actions():
                 self.driver.save_screenshot(f"{current_datetime}_{filename}.png")
             else:
                 dir_path = self.__create_screenshot_dir()
                 screenshot_path = os.path.join(dir_path, f"{current_datetime}_{filename}.png")
                 self.driver.save_screenshot(screenshot_path)
+
+    def __accept_cookies(self):
+        """
+        Gets rid of cookies pop up window when logging in.
+        """
+        try:
+            # find "accept cookies" button
+            cookie_button_selector = "//*[text()='Allow all cookies']"
+            cookie_button = self.driver.find_element(By.XPATH, cookie_button_selector)
+            self._save_screenshot("cookies_window_opened") # take screenshot if test
+            # click button
+            self.driver.execute_script("arguments[0].click();", 
+                                       cookie_button)
+            WebDriverWait(self.driver, 30).until(EC.staleness_of(cookie_button))
+        except NoSuchElementException:
+            pass        
 
     def __log_in(self, 
                  username: str, 
@@ -298,6 +314,8 @@ class Instagram(ABC):
             username_input_selector = "[name='username']"
             WebDriverWait(self.driver, 30).until(
                 EC.presence_of_element_located((By.CSS_SELECTOR, username_input_selector)))
+        # accept cookies
+        self.__accept_cookies()
         # take screenshot if test
         self._save_screenshot("instagram_login_page")
         # enter and submit credentials
